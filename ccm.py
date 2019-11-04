@@ -8,13 +8,13 @@ from requests.auth import HTTPBasicAuth
 from urllib3 import disable_warnings
 from urllib3.exceptions import InsecureRequestWarning
 from lxml import etree
-import sys 
+import sys
+import getopt
  
 disable_warnings(InsecureRequestWarning)
  
 username = ''
 password = ''
-
 host = ''
  
 wsdl = 'schema/current/AXLAPI.wsdl'
@@ -35,6 +35,7 @@ service = client.create_service(binding, location)
 
 client_realtime = Client(wsdl=wsdl_realtime, transport=transport, plugins=[history])
 #service_realtime = client_realtime.create_service(binding, location)
+
 
 def show_history():
     for item in [history.last_sent, history.last_received]:
@@ -76,11 +77,35 @@ def trans_pattern_lookup(ext):
     #print resp['return']['transPattern'][0]['calledPartyTransformationMask']
 
 def main():
-    if len(sys.argv) < 2:
-        print "Usage: python ccm.py [extension]"
-        exit()
+    cmd_opts = ["ip=", "css=", "login=", "trans"]
+    short_opts = "i:c:l:t:"
+    
+    if len(sys.argv) < 3:
+        print "Usage: python ccm.py [options] [value]"
+        print "--ip [IP Address] (search by IP)"
+        print "--css [Search Space] (list all devices in CSS)"
+        print "--login [User Name] (list all devices associated with user)"
+        print "--trans [Extension] (list all translation patterns associated with extension)"
 
-    trans_pattern_lookup(sys.argv[1])
+        sys.exit(1)
 
-#main()
-ip_lookup('10.15.10.67')
+
+    try:
+        arguments, values = getopt.getopt(sys.argv[1:], short_opts, cmd_opts)
+    except getopt.error as err:
+        print "error: " + str(err)
+        sys.exit(2)
+
+    print "arguments: " + str(arguments)
+    
+    for arg, val in arguments:
+        print "arg: " + arg
+        if arg in ("-i", "--ip"):
+            print "Search by IP: " + val
+            print ip_lookup(val)
+
+    
+    #trans_pattern_lookup(sys.argv[1])
+
+main()
+#ip_lookup('10.15.10.67')
