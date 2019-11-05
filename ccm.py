@@ -43,11 +43,32 @@ def show_history():
 
 def ip_lookup(ip_add):
     try:
-        resp = client_realtime.service.SelectCmDevice('', {'SelectBy':'Name', 'Status':'Registered', 'Class':'Phone'})
+        resp = client_realtime.service.SelectCmDevice('', 
+                {'SelectBy':'Name', 'Status':'Registered', 'Class':'Phone'})
 
         cm_nodes = resp['body']['SelectCmDeviceResult']['CmNodes']
         devices = resp['body']['SelectCmDeviceResult']['CmNodes'][1]['CmDevices']
         
+        prefix = ip_add.split('x')
+        
+        
+        if len(prefix) > 1:
+            ip_list = range(1,255)
+            dev_list = list()
+
+            for node in cm_nodes:
+                devices = node['CmDevices']
+
+                for dev in devices:
+                    for suffix in ip_list:
+                        #print "current: " + dev['IpAddress']
+                        #print "check: " + (prefix + str(suffix))
+
+                        if dev['IpAddress'] == (prefix[0] + str(suffix)):
+                            dev_list.append(dev)
+            
+            return dev_list
+
         for node in cm_nodes:
             devices = node['CmDevices']
             
@@ -61,21 +82,20 @@ def ip_lookup(ip_add):
         show_history()
 
 def trans_pattern_lookup(ext):
+    
     try:
         resp = service.listTransPattern(searchCriteria={'pattern':'%'},
                 returnedTags={'pattern': '', 'calledPartyTransformationMask': '', 'description': ''})
     except Fault:
         show_history()
 
-    #resp = service.listTransPattern('%')
+    
     for x in resp['return']['transPattern']:
-        #print x['calledPartyTransformationMask']
-
+        
         if (x['calledPartyTransformationMask'] == ext):
             print "Pattern: " + x['pattern'] + " description: " + x['description']
     
-    #print resp['return']['transPattern'][0]['calledPartyTransformationMask']
-
+    
 def main():
     cmd_opts = ["ip=", "css=", "login=", "trans"]
     short_opts = "i:c:l:t:"
@@ -103,6 +123,9 @@ def main():
         if arg in ("-i", "--ip"):
             print "Search by IP: " + val
             print ip_lookup(val)
+        elif arg in ("-t", "--trans"):
+            trans_pattern_lookup(val)
+
 
     
     #trans_pattern_lookup(sys.argv[1])
